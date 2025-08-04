@@ -51,7 +51,6 @@ api-integracao-youtube/
 │   ├── test-mapping.php              # Teste do mapeamento
 │   ├── log.txt                       # Arquivo de log
 │   ├── tmp/                          # Arquivos temporários
-│   └── README.md                     # Documentação do worker
 ├── entities/                         # Entidades do sistema
 │   └── video.php                     # Classe Video
 └── index.php                         # Arquivo de segurança
