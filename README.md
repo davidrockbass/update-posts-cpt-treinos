@@ -4,29 +4,34 @@
 
 Este projeto contém um **worker inteligente** que sincroniza automaticamente posts do CPT `treinos-video` com dados do YouTube, incluindo:
 
-- ✅ **Importação automática** de novos vídeos do canal
+- ✅ **Importação automática** de novos vídeos do canal (opcional)
 - ✅ **Atualização inteligente** de dados existentes
 - ✅ **Mapeamento automático** de taxonomias baseado em tags
 - ✅ **Título curto personalizado** via tags do YouTube
 - ✅ **Processamento otimizado** em lotes (10x mais rápido)
 - ✅ **Logs visuais** com barras de progresso e emojis
 - ✅ **Compatibilidade total** com ACF (Advanced Custom Fields)
+- ✅ **Cache inteligente** para evitar reprocessamento
+- ✅ **Rate limiting** configurável para evitar quota excedida
+- ✅ **Fase 1 opcional** via parâmetro
 
 **🔄 Processamento Infinito:** Por padrão, o worker processa **todos os vídeos** do canal até não encontrar mais nenhum.
 
 ## 🚀 Funcionalidades Principais
 
-### 📥 **Fase 1: Importação Automática**
+### 📥 **Fase 1: Importação Automática (Opcional)**
 - Busca **todos os vídeos** do canal configurado
 - Verifica tags de importação em **lotes otimizados**
 - Cria posts automaticamente para novos vídeos
 - **Performance:** 10x mais rápido que requisições individuais
+- **Opcional:** Pode ser desativada via parâmetro
 
 ### 🔄 **Fase 2: Atualização Inteligente**
 - Atualiza dados de todos os posts existentes
 - Sincroniza views, likes, duração, etc.
 - Aplica imagem destacada automaticamente
 - Processa taxonomias baseado em tags do YouTube
+- **Cache:** Evita reprocessar vídeos atualizados recentemente
 
 ### 🏷️ **Sistema de Taxonomias Automático**
 - Mapeia tags do YouTube para taxonomias do WordPress
@@ -35,9 +40,21 @@ Este projeto contém um **worker inteligente** que sincroniza automaticamente po
 - Logs detalhados de processamento
 
 ### 📝 **Título Curto Personalizado**
-- Extrai título curto de tags especiais (`tc:`)
+- Extrai título curto de tags especiais (`wp-titulo:`)
+- **Preserva valores existentes** se não houver tag
 - Permite controle total via YouTube
 - Salva no campo ACF `titulo_video_curto`
+
+### 🛡️ **Sistema de Cache Inteligente**
+- **24 horas de cache** para vídeos processados
+- Evita reprocessamento desnecessário
+- Economia de quota da API
+- Persistente no banco de dados
+
+### ⚡ **Rate Limiting Otimizado**
+- **Delay configurável** entre requisições (5 segundos)
+- Evita exceder quota da API
+- Processamento estável e confiável
 
 ## 📁 Estrutura do Projeto
 
@@ -86,39 +103,39 @@ define('WORKER_SECRET_KEY', 'processarvideos');
 // Tags descritivas otimizadas para SEO do YouTube
 return [
     // === TIPOS DE TREINO ===
-    'tipo-de-treino-cardio' => ['tipo-de-treino', 'cardio'],
-    'tipo-de-treino-forca' => ['tipo-de-treino', 'forca'],
-    'tipo-de-treino-hiit' => ['tipo-de-treino', 'hiit'],
-    'tipo-de-treino-alongamento' => ['tipo-de-treino', 'alongamento'],
-    'tipo-de-treino-aquecimento' => ['tipo-de-treino', 'aquecimento'],
-    'tipo-de-treino-relaxamento' => ['tipo-de-treino', 'relaxamento'],
+    'treino-cardio' => ['tipo-de-treino', 'cardio'],
+    'treino-forca' => ['tipo-de-treino', 'forca'],
+    'treino-hiit' => ['tipo-de-treino', 'hiit'],
+    'treino-alongamento' => ['tipo-de-treino', 'alongamento'],
+    'treino-aquecimento' => ['tipo-de-treino', 'aquecimento'],
+    'treino-relaxamento' => ['tipo-de-treino', 'relaxamento'],
     
     // === DURAÇÃO DOS VÍDEOS ===
-    'duracao-do-video-5' => ['duracao-do-video', '5'],
-    'duracao-do-video-5-10' => ['duracao-do-video', '5-10'],
-    'duracao-do-video-10-15' => ['duracao-do-video', '10-15'],
-    'duracao-do-video-15-20' => ['duracao-do-video', '15-20'],
-    'duracao-do-video-20' => ['duracao-do-video', '20'],
+    'duracao-5' => ['duracao-do-treino', '5'],
+    'duracao-5-10' => ['duracao-do-treino', '5-10'],
+    'duracao-10-15' => ['duracao-do-treino', '10-15'],
+    'duracao-15-20' => ['duracao-do-treino', '15-20'],
+    'duracao-20' => ['duracao-do-treino', '20'],
     
     // === DIFICULDADE ===
-    'dificuldade-iniciante' => ['dificuldade', 'iniciante'],
-    'dificuldade-intermediario' => ['dificuldade', 'intermediario'],
-    'dificuldade-avancado' => ['dificuldade', 'avancado'],
+    'nivel-iniciante' => ['dificuldade', 'iniciante'],
+    'nivel-intermediario' => ['dificuldade', 'intermediario'],
+    'nivel-avancado' => ['dificuldade', 'avancado'],
     
     // === ÁREAS DE FOCO ===
-    'area-de-foco-bracos' => ['area-de-foco', 'bracos'],
-    'area-de-foco-core-e-abs' => ['area-de-foco', 'core-e-abs'],
-    'area-de-foco-corpo-todo' => ['area-de-foco', 'corpo-todo'],
-    'area-de-foco-costas' => ['area-de-foco', 'costas'],
-    'area-de-foco-gluteos' => ['area-de-foco', 'gluteos'],
-    'area-de-foco-peito' => ['area-de-foco', 'peito'],
-    'area-de-foco-pernas' => ['area-de-foco', 'pernas'],
+    'foco-bracos' => ['area-de-foco', 'bracos'],
+    'foco-core-e-abs' => ['area-de-foco', 'core-e-abs'],
+    'foco-corpo-todo' => ['area-de-foco', 'corpo-todo'],
+    'foco-costas' => ['area-de-foco', 'costas'],
+    'foco-gluteos' => ['area-de-foco', 'gluteos'],
+    'foco-peito' => ['area-de-foco', 'peito'],
+    'foco-pernas' => ['area-de-foco', 'pernas'],
     
     // === EQUIPAMENTOS ===
-    'equipamentos-banco' => ['equipamentos', 'banco'],
-    'equipamentos-elasticos' => ['equipamentos', 'elasticos'],
-    'equipamentos-halteres' => ['equipamentos', 'halteres'],
-    'equipamentos-sem-equipamentos' => ['equipamentos', 'sem-equipamentos'],
+    'equipamentos-banco' => ['equipamento', 'banco'],
+    'equipamentos-elasticos' => ['equipamento', 'elasticos'],
+    'equipamentos-halteres' => ['equipamento', 'halteres'],
+    'equipamentos-sem' => ['equipamento', 'sem-equipamentos'],
 ];
 ```
 
@@ -163,19 +180,94 @@ Adicione tags que correspondam ao mapeamento:
 ### Execução
 
 #### Via Navegador
-```
-# Processamento completo
-https://seusite.com/wp-content/mu-plugins/api-integracao-youtube/worker/update-posts-cpt-treinos.php?chave=processarvideos
 
-# Processar apenas 50 posts
+**Apenas Atualização (Fase 2):**
+```
+https://seusite.com/wp-content/mu-plugins/api-integracao-youtube/worker/update-posts-cpt-treinos.php?chave=processarvideos
+```
+
+**Importação + Atualização (Fase 1 + Fase 2):**
+```
+https://seusite.com/wp-content/mu-plugins/api-integracao-youtube/worker/update-posts-cpt-treinos.php?chave=processarvideos&fase1=1
+```
+
+**Com Limite de Posts:**
+```
 https://seusite.com/wp-content/mu-plugins/api-integracao-youtube/worker/update-posts-cpt-treinos.php?chave=processarvideos&max=50
 ```
 
+**Com Limite + Importação:**
+```
+https://seusite.com/wp-content/mu-plugins/api-integracao-youtube/worker/update-posts-cpt-treinos.php?chave=processarvideos&max=50&fase1=1
+```
+
 #### Via Linha de Comando
+
+**Apenas Atualização:**
 ```bash
 cd worker/
 php update-posts-cpt-treinos.php
 ```
+
+**Importação + Atualização:**
+```bash
+cd worker/
+php update-posts-cpt-treinos.php --fase1
+```
+
+**Com Limite:**
+```bash
+cd worker/
+php update-posts-cpt-treinos.php --max=50
+```
+
+**Com Limite + Importação:**
+```bash
+cd worker/
+php update-posts-cpt-treinos.php --max=50 --fase1
+```
+
+### 📋 Parâmetros Disponíveis
+
+| Parâmetro | Descrição | Exemplo |
+|-----------|-----------|---------|
+| `chave` | Chave de segurança (obrigatório) | `chave=processarvideos` |
+| `fase1` | Ativa importação de novos vídeos | `fase1=1` ou `fase1=true` |
+| `max` | Limita número de posts processados | `max=50` |
+
+### 🎯 Cenários de Uso
+
+#### **Cenário 1: Atualização Diária (Recomendado)**
+```
+?chave=processarvideos
+```
+- **Uso**: Atualizar views, likes, dados dos vídeos existentes
+- **Quota**: Baixa (só endpoint `videos`)
+- **Frequência**: Diária
+
+#### **Cenário 2: Importação de Novos Vídeos**
+```
+?chave=processarvideos&fase1=1
+```
+- **Uso**: Importar novos vídeos + atualizar existentes
+- **Quota**: Alta (endpoint `search` + `videos`)
+- **Frequência**: Semanal ou quando necessário
+
+#### **Cenário 3: Teste/Debug**
+```
+?chave=processarvideos&max=10
+```
+- **Uso**: Testar com poucos vídeos
+- **Quota**: Muito baixa
+- **Frequência**: Para testes
+
+#### **Cenário 4: Processamento Completo**
+```
+?chave=processarvideos&fase1=1&max=100
+```
+- **Uso**: Importar novos + atualizar limitado
+- **Quota**: Controlada
+- **Frequência**: Quando necessário
 
 ## 📊 Campos ACF Atualizados
 
@@ -212,6 +304,18 @@ php test-mapping.php
 ```
 Testa o mapeamento de taxonomias com tags de exemplo.
 
+### Verificar Status da API
+```bash
+php check-quota.php
+```
+Verifica o status da API do YouTube e quota disponível.
+
+### Testar Custo da API
+```bash
+php test-api-cost.php
+```
+Demonstra a diferença de custo entre endpoints da API.
+
 ## 📈 Logs e Monitoramento
 
 ### Exemplo de Log Otimizado
@@ -247,6 +351,20 @@ tail -n 50 worker/log.txt
 
 ## 🔑 Configuração da API do YouTube
 
+### ⚠️ Importante: Quota da API
+
+A YouTube Data API v3 tem limites de quota:
+- **Quota diária**: 10.000 unidades
+- **Quota por 100s**: 1.000.000 unidades
+- **Custo por operação**:
+  - `search`: 100 unidades
+  - `videos`: 1 unidade
+
+**Dicas para economizar quota:**
+- Use o delay entre requisições (`API_DELAY_SECONDS`)
+- Evite executar o worker múltiplas vezes por dia
+- Monitore o uso com `php check-quota.php`
+
 ### Como obter a API Key do Google
 
 1. **Acesse o Google Cloud Console**: https://console.cloud.google.com/
@@ -265,6 +383,17 @@ tail -n 50 worker/log.txt
    ```
 
 ## 🛠️ Solução de Problemas
+
+### Erro "Quota Excedida" (HTTP 403)
+```
+❌ Erro ao buscar vídeos do canal: HTTP 403
+```
+
+**Soluções:**
+1. **Aguarde o reset da quota** (meia-noite UTC)
+2. **Verifique o status**: `php check-quota.php`
+3. **Aumente o delay**: Configure `API_DELAY_SECONDS` para 2-3 segundos
+4. **Processe menos vídeos**: Use `&max=10` na URL
 
 ### Erro "wp-load.php not found"
 Configure o caminho manual no `worker/config.php`:
