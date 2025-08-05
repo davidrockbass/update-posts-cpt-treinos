@@ -156,6 +156,7 @@ function checkImportTagsBatch($video_ids, $import_tag) {
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         
         $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
         if ($response === false) {
@@ -163,8 +164,18 @@ function checkImportTagsBatch($video_ids, $import_tag) {
             continue;
         }
         
+        if ($http_code !== 200) {
+            log_message("❌ Erro HTTP $http_code no lote " . ($batch_index + 1), 'ERROR');
+            if ($http_code === 403) {
+                log_message("🚫 Quota da API excedida! Aguarde o reset.", 'WARNING');
+                return $results; // Para de processar se quota excedida
+            }
+            continue;
+        }
+        
         $data = json_decode($response);
         if (!$data || !isset($data->items)) {
+            log_message("Resposta inválida no lote " . ($batch_index + 1), 'WARNING');
             continue;
         }
         
@@ -175,6 +186,11 @@ function checkImportTagsBatch($video_ids, $import_tag) {
         }
         
         log_message("Lote " . ($batch_index + 1) . " verificado: " . count($batch) . " vídeos", 'INFO');
+        
+        // Delay para evitar exceder quota
+        if (defined('API_DELAY_SECONDS') && API_DELAY_SECONDS > 0) {
+            sleep(API_DELAY_SECONDS);
+        }
     }
     
     return $results;
@@ -187,14 +203,29 @@ function videoExistsInWordPress($video_id) {
     global $wpdb;
     
     $post = $wpdb->get_row($wpdb->prepare("
-        SELECT p.ID 
+        SELECT p.ID, pm2.meta_value as last_update
         FROM {$wpdb->posts} p
         INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = 'last_api_update'
         WHERE p.post_type = %s 
         AND p.post_status = %s
         AND pm.meta_key = 'id_video'
         AND pm.meta_value = %s
     ", CPT_NAME, CPT_STATUS, $video_id));
+    
+    if ($post) {
+        // Verifica se foi atualizado recentemente (cache)
+        if ($post->last_update) {
+            $last_update = new DateTime($post->last_update);
+            $now = new DateTime();
+            $diff_hours = ($now->getTimestamp() - $last_update->getTimestamp()) / 3600;
+            
+            if ($diff_hours < CACHE_DURATION_HOURS) {
+                log_message("⏭️ Vídeo $video_id já atualizado recentemente (cache válido)", 'INFO');
+                return true; // Considera como existente se cache válido
+            }
+        }
+    }
     
     return $post !== null;
 }
@@ -257,6 +288,9 @@ function getYoutubeVideoData($id_video)
     curl_close($ch);
     
     if ($http_code != 200) {
+        if ($http_code === 403) {
+            throw new Exception("Quota da API excedida! Aguarde o reset da quota.");
+        }
         throw new Exception("Erro ao obter dados do vídeo '$id_video': HTTP $http_code");
     }
     
@@ -483,6 +517,9 @@ function updatePostType($id_post, $videoData)
     foreach ($acf_fields as $field_name => $field_value) {
         update_field($field_name, $field_value, $id_post);
     }
+    
+    // Registra data da última atualização via API
+    update_post_meta($id_post, 'last_api_update', current_time('mysql'));
     
     // Limpa o cache do post
     clean_post_cache($id_post);
