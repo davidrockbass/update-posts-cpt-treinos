@@ -51,6 +51,7 @@ api-integracao-youtube/
 │   ├── test-mapping.php              # Teste do mapeamento
 │   ├── log.txt                       # Arquivo de log
 │   ├── tmp/                          # Arquivos temporários
+│   └── README.md                     # Documentação do worker
 ├── entities/                         # Entidades do sistema
 │   └── video.php                     # Classe Video
 └── index.php                         # Arquivo de segurança
@@ -85,39 +86,39 @@ define('WORKER_SECRET_KEY', 'processarvideos');
 // Tags descritivas otimizadas para SEO do YouTube
 return [
     // === TIPOS DE TREINO ===
-    'treino-cardio' => ['tipo-de-treino', 'cardio'],
-    'treino-forca' => ['tipo-de-treino', 'forca'],
-    'treino-hiit' => ['tipo-de-treino', 'hiit'],
-    'treino-alongamento' => ['tipo-de-treino', 'alongamento'],
-    'treino-aquecimento' => ['tipo-de-treino', 'aquecimento'],
-    'treino-relaxamento' => ['tipo-de-treino', 'relaxamento'],
+    'tipo-de-treino-cardio' => ['tipo-de-treino', 'cardio'],
+    'tipo-de-treino-forca' => ['tipo-de-treino', 'forca'],
+    'tipo-de-treino-hiit' => ['tipo-de-treino', 'hiit'],
+    'tipo-de-treino-alongamento' => ['tipo-de-treino', 'alongamento'],
+    'tipo-de-treino-aquecimento' => ['tipo-de-treino', 'aquecimento'],
+    'tipo-de-treino-relaxamento' => ['tipo-de-treino', 'relaxamento'],
     
     // === DURAÇÃO DOS VÍDEOS ===
-    'duracao-5' => ['duracao-do-treino', '5'],
-    'duracao-5-10' => ['duracao-do-treino', '5-10'],
-    'duracao-10-15' => ['duracao-do-treino', '10-15'],
-    'duracao-15-20' => ['duracao-do-treino', '15-20'],
-    'duracao-20' => ['duracao-do-treino', '20'],
+    'duracao-do-video-5' => ['duracao-do-video', '5'],
+    'duracao-do-video-5-10' => ['duracao-do-video', '5-10'],
+    'duracao-do-video-10-15' => ['duracao-do-video', '10-15'],
+    'duracao-do-video-15-20' => ['duracao-do-video', '15-20'],
+    'duracao-do-video-20' => ['duracao-do-video', '20'],
     
     // === DIFICULDADE ===
-    'nivel-iniciante' => ['dificuldade', 'iniciante'],
-    'nivel-intermediario' => ['dificuldade', 'intermediario'],
-    'nivel-avancado' => ['dificuldade', 'avancado'],
+    'dificuldade-iniciante' => ['dificuldade', 'iniciante'],
+    'dificuldade-intermediario' => ['dificuldade', 'intermediario'],
+    'dificuldade-avancado' => ['dificuldade', 'avancado'],
     
     // === ÁREAS DE FOCO ===
-    'foco-bracos' => ['area-de-foco', 'bracos'],
-    'foco-core-e-abs' => ['area-de-foco', 'core-e-abs'],
-    'foco-corpo-todo' => ['area-de-foco', 'corpo-todo'],
-    'foco-costas' => ['area-de-foco', 'costas'],
-    'foco-gluteos' => ['area-de-foco', 'gluteos'],
-    'foco-peito' => ['area-de-foco', 'peito'],
-    'foco-pernas' => ['area-de-foco', 'pernas'],
+    'area-de-foco-bracos' => ['area-de-foco', 'bracos'],
+    'area-de-foco-core-e-abs' => ['area-de-foco', 'core-e-abs'],
+    'area-de-foco-corpo-todo' => ['area-de-foco', 'corpo-todo'],
+    'area-de-foco-costas' => ['area-de-foco', 'costas'],
+    'area-de-foco-gluteos' => ['area-de-foco', 'gluteos'],
+    'area-de-foco-peito' => ['area-de-foco', 'peito'],
+    'area-de-foco-pernas' => ['area-de-foco', 'pernas'],
     
     // === EQUIPAMENTOS ===
-    'equipamentos-banco' => ['equipamento', 'banco'],
-    'equipamentos-elasticos' => ['equipamento', 'elasticos'],
-    'equipamentos-halteres' => ['equipamento', 'halteres'],
-    'equipamentos-sem' => ['equipamento', 'sem-equipamentos'],
+    'equipamentos-banco' => ['equipamentos', 'banco'],
+    'equipamentos-elasticos' => ['equipamentos', 'elasticos'],
+    'equipamentos-halteres' => ['equipamentos', 'halteres'],
+    'equipamentos-sem-equipamentos' => ['equipamentos', 'sem-equipamentos'],
 ];
 ```
 
@@ -211,18 +212,6 @@ php test-mapping.php
 ```
 Testa o mapeamento de taxonomias com tags de exemplo.
 
-### Verificar Status da API
-```bash
-php check-quota.php
-```
-Verifica o status da API do YouTube e quota disponível.
-
-### Testar Custo da API
-```bash
-php test-api-cost.php
-```
-Demonstra a diferença de custo entre endpoints da API.
-
 ## 📈 Logs e Monitoramento
 
 ### Exemplo de Log Otimizado
@@ -258,20 +247,6 @@ tail -n 50 worker/log.txt
 
 ## 🔑 Configuração da API do YouTube
 
-### ⚠️ Importante: Quota da API
-
-A YouTube Data API v3 tem limites de quota:
-- **Quota diária**: 10.000 unidades
-- **Quota por 100s**: 1.000.000 unidades
-- **Custo por operação**:
-  - `search`: 100 unidades
-  - `videos`: 1 unidade
-
-**Dicas para economizar quota:**
-- Use o delay entre requisições (`API_DELAY_SECONDS`)
-- Evite executar o worker múltiplas vezes por dia
-- Monitore o uso com `php check-quota.php`
-
 ### Como obter a API Key do Google
 
 1. **Acesse o Google Cloud Console**: https://console.cloud.google.com/
@@ -290,17 +265,6 @@ A YouTube Data API v3 tem limites de quota:
    ```
 
 ## 🛠️ Solução de Problemas
-
-### Erro "Quota Excedida" (HTTP 403)
-```
-❌ Erro ao buscar vídeos do canal: HTTP 403
-```
-
-**Soluções:**
-1. **Aguarde o reset da quota** (meia-noite UTC)
-2. **Verifique o status**: `php check-quota.php`
-3. **Aumente o delay**: Configure `API_DELAY_SECONDS` para 2-3 segundos
-4. **Processe menos vídeos**: Use `&max=10` na URL
 
 ### Erro "wp-load.php not found"
 Configure o caminho manual no `worker/config.php`:
