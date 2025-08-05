@@ -710,48 +710,59 @@ $maxIterations = get_max_iterations();
 
 // Execução principal
 try {
-    // FASE 1: Importação de novos vídeos do canal
-    log_separator("FASE 1: VERIFICANDO NOVOS VÍDEOS DO CANAL");
+    $maxIterations = get_max_iterations();
+    $should_run_phase1 = should_run_phase1();
     
-    try {
-        log_message("Buscando vídeos do canal: " . YOUTUBE_CHANNEL_ID, 'INFO');
-        log_message("Tag de importação: " . IMPORT_TAG, 'INFO');
+    log_message("🎯 Iniciando worker de atualização de vídeos", 'HEADER');
+    log_message("📊 Máximo de iterações: " . ($maxIterations === -1 ? 'Infinito' : $maxIterations), 'INFO');
+    log_message(" Fase 1 (Importação): " . ($should_run_phase1 ? 'Ativada' : 'Desativada'), 'INFO');
+    
+    // FASE 1: Importação de novos vídeos do canal (OPCIONAL)
+    if ($should_run_phase1) {
+        log_separator("FASE 1: VERIFICANDO NOVOS VÍDEOS DO CANAL");
         
-        $videos_to_import = getChannelVideosForImport();
-        $total_videos = count($videos_to_import);
-        
-        if ($total_videos == 0) {
-            log_message("Nenhum vídeo encontrado com a tag de importação", 'WARNING');
-        } else {
-            log_message("Encontrados $total_videos vídeos com tag de importação no canal", 'SUCCESS');
+        try {
+            log_message("Buscando vídeos do canal: " . YOUTUBE_CHANNEL_ID, 'INFO');
+            log_message("Tag de importação: " . IMPORT_TAG, 'INFO');
             
-            $imported_count = 0;
-            $skipped_count = 0;
+            $videos_to_import = getChannelVideosForImport();
+            $total_videos = count($videos_to_import);
             
-            foreach ($videos_to_import as $index => $video) {
-                $video_id = $video['id'];
-                $title = $video['title'];
+            if ($total_videos == 0) {
+                log_message("Nenhum vídeo encontrado com a tag de importação", 'WARNING');
+            } else {
+                log_message("Encontrados $total_videos vídeos com tag de importação no canal", 'SUCCESS');
                 
-                log_progress($index + 1, $total_videos, "Verificando vídeo: $video_id");
+                $imported_count = 0;
+                $skipped_count = 0;
                 
-                if (videoExistsInWordPress($video_id)) {
-                    log_message("Vídeo $video_id já existe no WordPress - pulando", 'WARNING');
-                    $skipped_count++;
-                } else {
-                    createVideoPost($video_id, $title);
-                    log_message("Novo post criado para vídeo $video_id", 'SUCCESS');
-                    $imported_count++;
+                foreach ($videos_to_import as $index => $video) {
+                    $video_id = $video['id'];
+                    $title = $video['title'];
+                    
+                    log_progress($index + 1, $total_videos, "Verificando vídeo: $video_id");
+                    
+                    if (videoExistsInWordPress($video_id)) {
+                        log_message("Vídeo $video_id já existe no WordPress - pulando", 'WARNING');
+                        $skipped_count++;
+                    } else {
+                        createVideoPost($video_id, $title);
+                        log_message("Novo post criado para vídeo $video_id", 'SUCCESS');
+                        $imported_count++;
+                    }
                 }
+                
+                log_separator("RESUMO FASE 1");
+                log_message("📊 Novos posts criados: $imported_count", 'SUCCESS');
+                log_message(" Vídeos já existiam: $skipped_count", 'INFO');
+                log_message("📊 Total processado: $total_videos", 'INFO');
             }
             
-            log_separator("RESUMO FASE 1");
-            log_message("📊 Novos posts criados: $imported_count", 'SUCCESS');
-            log_message("📊 Vídeos já existiam: $skipped_count", 'INFO');
-            log_message("📊 Total processado: $total_videos", 'INFO');
+        } catch (Exception $e) {
+            log_message("Erro na fase de importação: " . $e->getMessage(), 'ERROR');
         }
-        
-    } catch (Exception $e) {
-        log_message("Erro na fase de importação: " . $e->getMessage(), 'ERROR');
+    } else {
+        log_message("⏭️ Fase 1 pulada (não solicitada)", 'INFO');
     }
     
     // FASE 2: Atualização de dados dos vídeos existentes

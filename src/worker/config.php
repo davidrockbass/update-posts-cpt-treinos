@@ -107,4 +107,15 @@ function is_valid_access_key() {
     }
     return true;
 }
+
+function should_run_phase1() {
+    if (php_sapi_name() !== 'cli') {
+        // Via browser: ?fase1=1 ou ?fase1=true para executar
+        return isset($_GET['fase1']) && ($_GET['fase1'] === '1' || $_GET['fase1'] === 'true');
+    } else {
+        // Via CLI: --fase1 para executar
+        $options = getopt("", ["fase1"]);
+        return isset($options['fase1']);
+    }
+}
 ?> 
