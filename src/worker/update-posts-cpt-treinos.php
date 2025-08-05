@@ -319,8 +319,13 @@ function getYoutubeVideoData($id_video)
     // Processa data de publicação
     $data_publicacao = new DateTime($snippet->publishedAt);
     $data_publicacao->setTimezone(new DateTimeZone('America/Sao_Paulo'));
-    $data_formatada = $data_publicacao->format('d/m/Y H:i:s');
-    $data_curta = $data_publicacao->format('d/m/Y');
+
+    // Formato correto: Y-m-d (2025-04-23)
+    $data_formatada = $data_publicacao->format('Y-m-d');
+
+    // Formato correto: Mmm YYYY (Abr 2025)
+    setlocale(LC_TIME, 'pt_BR', 'pt_BR.utf-8', 'portuguese');
+    $data_curta = ucfirst(strftime('%b %Y', $data_publicacao->getTimestamp()));
     
     // Processa thumbnail - sempre usa maxresdefault.jpg
     $thumbnail_url = "https://img.youtube.com/vi/" . $id_video . "/maxresdefault.jpg";
