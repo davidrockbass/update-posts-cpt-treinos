@@ -510,9 +510,13 @@ function updatePostType($id_post, $videoData)
         'views' => $videoData->Views,
         'views_curto' => $videoData->ViewsCurto,
         'likes' => $videoData->Likes,
-        'plataforma' => $videoData->Plataforma,
-        'titulo_video_curto' => $videoData->TituloCurto
+        'plataforma' => $videoData->Plataforma
     );
+    
+    // Só atualiza o título curto se houver um valor válido
+    if (!empty($videoData->TituloCurto)) {
+        $acf_fields['titulo_video_curto'] = $videoData->TituloCurto;
+    }
     
     foreach ($acf_fields as $field_name => $field_value) {
         update_field($field_name, $field_value, $id_post);
@@ -763,20 +767,21 @@ try {
         $contador = 1;
         $processed_count = 0;
         $error_count = 0;
+        $error_posts = []; // Array para coletar IDs com erro
         
         while ($maxIterations === -1 || $contador <= $maxIterations) {
             $treino = getPostType($contador);
-        if ($treino === null) {
-            break;
-        }
+            if ($treino === null) {
+                break;
+            }
             
-        if (!isset($treino->meta->id_video) || empty($treino->meta->id_video)) {
+            if (!isset($treino->meta->id_video) || empty($treino->meta->id_video)) {
                 log_message("Post '$treino->ID' não possui id_video - pulando", 'WARNING');
-            $contador++;
-            continue;
-        }
+                $contador++;
+                continue;
+            }
             
-        $id_video = $treino->meta->id_video;
+            $id_video = $treino->meta->id_video;
             log_progress($contador, $total_posts, "Processando post ID: $treino->ID, Vídeo: $id_video");
 
             try {
@@ -785,17 +790,25 @@ try {
                 setFeaturedImage($treino->ID, $youtubeVideoData->ThumbnailUrl);
                 log_message("Post '$treino->ID' atualizado com sucesso", 'SUCCESS');
                 $processed_count++;
-        } catch (Exception $e) {
+            } catch (Exception $e) {
                 log_message("Erro ao processar post '$treino->ID': " . $e->getMessage(), 'ERROR');
                 $error_count++;
-        }
+                $error_posts[] = $treino->ID; // Adiciona ID à lista de erros
+            }
 
-        $contador++;
-    }
+            $contador++;
+        }
 
         log_separator("RESUMO FASE 2");
         log_message("📊 Posts processados com sucesso: $processed_count", 'SUCCESS');
         log_message("📊 Posts com erro: $error_count", 'ERROR');
+        
+        // Mostra os IDs dos posts com erro
+        if (!empty($error_posts)) {
+            $error_ids = implode(', ', $error_posts);
+            log_message("📊 IDs dos posts com erro: $error_ids", 'ERROR');
+        }
+        
         log_message("📊 Total de posts: $total_posts", 'INFO');
     }
 
