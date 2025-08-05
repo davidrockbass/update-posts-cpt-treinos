@@ -13,16 +13,16 @@ return [
     'treino-relaxamento' => ['tipo-de-treino', 'relaxamento'],
     
     // === DURAÇÃO DOS VÍDEOS ===
-    'duracao-5' => ['duracao-do-video', '5'],
-    'duracao-5-10' => ['duracao-do-video', '5-10'],
-    'duracao-10-15' => ['duracao-do-video', '10-15'],
-    'duracao-15-20' => ['duracao-do-video', '15-20'],
-    'duracao-20' => ['duracao-do-video', '20'],
+    'duracao-5' => ['duracao-do-treino', '5'],
+    'duracao-5-10' => ['duracao-do-treino', '5-10'],
+    'duracao-10-15' => ['duracao-do-treino', '10-15'],
+    'duracao-15-20' => ['duracao-do-treino', '15-20'],
+    'duracao-20' => ['duracao-do-treino', '20'],
     
     // === DIFICULDADE ===
-    'dificuldade-iniciante' => ['dificuldade', 'iniciante'],
-    'dificuldade-intermediario' => ['dificuldade', 'intermediario'],
-    'dificuldade-avancado' => ['dificuldade', 'avancado'],
+    'nivel-iniciante' => ['dificuldade', 'iniciante'],
+    'nivel-intermediario' => ['dificuldade', 'intermediario'],
+    'nivel-avancado' => ['dificuldade', 'avancado'],
     
     // === ÁREAS DE FOCO ===
     'foco-bracos' => ['area-de-foco', 'bracos'],
@@ -34,8 +34,8 @@ return [
     'foco-pernas' => ['area-de-foco', 'pernas'],
     
     // === EQUIPAMENTOS ===
-    'equipamentos-banco' => ['equipamentos', 'banco'],
-    'equipamentos-elasticos' => ['equipamentos', 'elasticos'],
-    'equipamentos-halteres' => ['equipamentos', 'halteres'],
-    'equipamentos-sem' => ['equipamentos', 'sem-equipamentos'],
+    'equipamentos-banco' => ['equipamento', 'banco'],
+    'equipamentos-elasticos' => ['equipamento', 'elasticos'],
+    'equipamentos-halteres' => ['equipamento', 'halteres'],
+    'equipamentos-sem' => ['equipamento', 'sem-equipamentos'],
 ]; 

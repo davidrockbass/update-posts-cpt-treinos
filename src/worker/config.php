@@ -12,6 +12,11 @@ define('CPT_STATUS', 'publish');
 define('MAX_ITERATIONS_DEFAULT', 0); // 0 = infinito
 define('POSTS_PER_PAGE', 1);
 
+// Controle de quota da API
+define('API_DELAY_SECONDS', 2); // Delay entre requisições para evitar quota
+define('BATCH_SIZE', 50); // Máximo de vídeos por requisição batch
+define('CACHE_DURATION_HOURS', 24); // Cache de vídeos já processados
+
 // Log e arquivos
 define('LOG_FILENAME', 'log.txt');
 define('TEMP_DIR_NAME', 'tmp');
